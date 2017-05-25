@@ -231,9 +231,8 @@ typedef struct CK_DATE{
     char *buf;
     size_t sz;
     int alloc2 = 0;
-    // If the value being set is of string type:
-    if (PyString_Check($input) && 
-        SWIG_IsOK(SWIG_AsCharPtrAndSize($input, &buf, &sz, &alloc2))) {
+    // If the value being set is of bytes type:
+    if (PyBytes_Check($input)) {
       arg2 = buf;
     } else {
       // If the value being set is of CK_RSA_PKCS_OAEP_PARAMS type:
