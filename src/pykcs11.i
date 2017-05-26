@@ -51,7 +51,7 @@ using namespace std;
 %template(ckobjlist) vector<CK_OBJECT_HANDLE>;
 
 %pointer_class(unsigned long, CK_SESSION_HANDLE);
-%pointer_class(unsigned long, CK_OBJECT_HANDLE);
+typedef unsigned long CK_OBJECT_HANDLE;
 
 #if SWIGPYTHON
 %typemap(out) PyKCS11String {
