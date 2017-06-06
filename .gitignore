@@ -1,8 +1,13 @@
-.DS_Store
-.swp
 *.py[co]
+*.so
+*.swp
+.DS_Store
+.coverage
+.swp
+.tox
 PyKCS11/LowLevel.py
 build-stamp
 build/
 dist/
+htmlcov
 src/pykcs11_wrap.cpp

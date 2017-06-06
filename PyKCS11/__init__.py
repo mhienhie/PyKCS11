@@ -82,6 +82,7 @@ for x in PyKCS11.LowLevel.__dict__.keys():
             eval(x[:3])[x] = eval(x)  # => CKM['CKM_RSA_PKCS'] = CKM_RSA_PKCS
 
 # special CKR[] values
+CKR[-3] = "Unknown format"
 CKR[-2] = "Unkown PKCS#11 type"
 CKR[-1] = "Load"
 
@@ -90,6 +91,38 @@ class ckbytelist(PyKCS11.LowLevel.ckbytelist):
     """
     add a __repr__() method to the LowLevel equivalent
     """
+
+    def __init__(self, data=[]):
+        # default size of the vector
+        size = 0
+        if isinstance(data, int):
+            size = data
+            data = None
+
+        super(ckbytelist, self).__init__(size)
+
+        # No value to initialize
+        if data is None:
+            return
+
+        # b'abc'
+        if isinstance(data, bytes):
+            self.reserve(len(data))
+            for x in data:
+                self.append(byte_to_int(x))
+        # "abc"
+        elif isinstance(data, str):
+            tmp = bytes(data, "utf-8")
+            self.reserve(len(tmp))
+            for x in tmp:
+                self.append(byte_to_int(x))
+        # [141, 142, 143]
+        elif isinstance(data, list) or isinstance(data, ckbytelist):
+            self.reserve(len(data))
+            for c in range(len(data)):
+                self.append(data[c])
+        else:
+            raise PyKCS11.PyKCS11Error(-3, text=type(data))
 
     def __repr__(self):
         """
@@ -646,7 +679,7 @@ class Mechanism(object):
         self._mech.mechanism = mechanism
         self._param = None
         if param:
-            self._param = to_param_string(param)
+            self._param = ckbytelist(param)
             self._mech.pParameter = self._param
             self._mech.ulParameterLen = len(param)
 
@@ -702,14 +735,7 @@ class DigestSession(object):
         @param data: data to add to the digest
         @type data: bytes or string
         """
-        data1 = ckbytelist()
-        data1.reserve(len(data))
-        if isinstance(data, bytes):
-            for x in data:
-                data1.append(byte_to_int(x))
-        else:
-            for c in range(len(data)):
-                data1.append(data[c])
+        data1 = ckbytelist(data)
         rv = self._lib.C_DigestUpdate(self._session, data1)
         if rv != CKR_OK:
             raise PyKCS11Error(rv)
@@ -894,16 +920,8 @@ class Session(object):
 
         """
         digest = ckbytelist()
-        ps = None  # must be declared here or may be deallocated too early
         m = mecha.to_native()
-        data1 = ckbytelist()
-        data1.reserve(len(data))
-        if isinstance(data, bytes):
-            for x in data:
-                data1.append(byte_to_int(x))
-        else:
-            for c in range(len(data)):
-                data1.append(data[c])
+        data1 = ckbytelist(data)
         rv = self.lib.C_DigestInit(self.session, m)
         if rv != CKR_OK:
             raise PyKCS11Error(rv)
@@ -938,14 +956,7 @@ class Session(object):
         """
         m = mecha.to_native()
         signature = ckbytelist()
-        data1 = ckbytelist()
-        data1.reserve(len(data))
-        if isinstance(data, bytes):
-            for x in data:
-                data1.append(byte_to_int(x))
-        else:
-            for c in range(len(data)):
-                data1.append(data[c])
+        data1 = ckbytelist(data)
         rv = self.lib.C_SignInit(self.session, m, key)
         if rv != CKR_OK:
             raise PyKCS11Error(rv)
@@ -977,15 +988,7 @@ class Session(object):
 
         """
         m = mecha.to_native()
-        data1 = ckbytelist()
-        data1.reserve(len(data))
-
-        if isinstance(data, bytes):
-            for x in data:
-                data1.append(byte_to_int(x))
-        else:
-            for c in range(len(data)):
-                data1.append(data[c])
+        data1 = ckbytelist(data)
         rv = self.lib.C_VerifyInit(self.session, m, key)
         if rv != CKR_OK:
             raise PyKCS11Error(rv)
@@ -1017,16 +1020,8 @@ class Session(object):
 
         """
         encrypted = ckbytelist()
-        ps = None  # must be declared here or may be deallocated too early
         m = mecha.to_native()
-        data1 = ckbytelist()
-        data1.reserve(len(data))
-        if isinstance(data, bytes):
-            for x in data:
-                data1.append(byte_to_int(x))
-        else:
-            for c in range(len(data)):
-                data1.append(data[c])
+        data1 = ckbytelist(data)
         rv = self.lib.C_EncryptInit(self.session, m, key)
         if rv != CKR_OK:
             raise PyKCS11Error(rv)
@@ -1061,14 +1056,7 @@ class Session(object):
         """
         m = mecha.to_native()
         decrypted = ckbytelist()
-        data1 = ckbytelist()
-        data1.reserve(len(data))
-        if isinstance(data, bytes):
-            for x in data:
-                data1.append(byte_to_int(x))
-        else:
-            for c in range(len(data)):
-                data1.append(data[c])
+        data1 = ckbytelist(data)
         rv = self.lib.C_DecryptInit(self.session, m, key)
         if rv != CKR_OK:
             raise PyKCS11Error(rv)
